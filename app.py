@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
     current_user
 from oauth import OAuthSignIn
+from collections import OrderedDict
 
 
 app = Flask(__name__)
@@ -29,6 +30,23 @@ db = SQLAlchemy(app)
 lm = LoginManager(app)
 lm.login_view = 'index'
 
+
+class DictSerializableMixin(object):
+    def serialize(self):
+        return self._asdict()
+
+    def _asdict(self):
+        result = OrderedDict()
+        for key in self.__mapper__.c.keys():
+            result[key] = self._pytype(getattr(self, key))
+        return result
+
+    def _pytype(self, v):
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return v
+
+__schema__ = 'ooiui'
 
 # class User(UserMixin, db.Model):
 #     __tablename__ = 'users'
@@ -245,9 +263,9 @@ class User(UserMixin, db.Model):
         if not temp_hash.verify_password(password2):
             raise ValidationError('Passwords do not match')
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
+    # @login_manager.user_loader
+    # def load_user(user_id):
+    #     return User.query.get(int(user_id))
 
     def generate_auth_token(self, expiration):
         s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
@@ -313,7 +331,8 @@ def index():
 
 @app.route('/logout')
 def logout():
-    logout_user()
+    msg = logout_user()
+    print msg
     return redirect(url_for('index'))
 
 
@@ -346,4 +365,4 @@ def oauth_callback(provider='cilogon'):
 
 if __name__ == '__main__':
     # db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5100)
