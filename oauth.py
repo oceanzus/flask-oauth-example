@@ -116,6 +116,7 @@ class CILogonSignIn(OAuthSignIn):
         )
 
     def authorize(self):
+        print self.get_callback_url()
         return redirect(self.service.get_authorize_url(
             scope='email',
             response_type='code',
@@ -125,7 +126,7 @@ class CILogonSignIn(OAuthSignIn):
     def callback(self):
         if 'code' not in request.args:
             return None, None, None
-        print request.args['code']
+        print request.args
         return 'user_id', 'username', 'email'
 
         oauth_session = self.service.get_auth_session(

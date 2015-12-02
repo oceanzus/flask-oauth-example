@@ -344,15 +344,17 @@ def oauth_authorize(provider):
     return oauth.authorize()
 
 
-# @app.route('/callback/<provider>')
-@app.route('/login/authorized')
-def oauth_callback(provider='cilogon'):
+# @app.route('/login/authorized')
+@app.route('/callback/<provider>')
+def oauth_callback(provider):
     if not current_user.is_anonymous:
         return redirect(url_for('index'))
     oauth = OAuthSignIn.get_provider(provider)
+    print oauth
+    print oauth.callback()
     user_id, username, email = oauth.callback()
     if user_id is None:
-        flash('Authentication failed.')
+        print 'Authentication failed.'
         return redirect(url_for('index'))
     user = User.query.filter_by(user_id=user_id).first()
     if not user:
