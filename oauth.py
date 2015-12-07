@@ -124,10 +124,11 @@ class CILogonSignIn(OAuthSignIn):
         )
 
     def callback(self):
+        print request.args
         if 'code' not in request.args:
             return None, None, None
         print request.args
-        return 'user_id', 'username', 'email'
+        #return 'user_id', 'username', 'email'
 
         oauth_session = self.service.get_auth_session(
             data={'code': request.args['code'],
