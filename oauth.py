@@ -117,17 +117,19 @@ class CILogonSignIn(OAuthSignIn):
         )
 
     def authorize(self):
+        print 'Inside authorize'
         print self.get_callback_url()
+        print 'Outside authorize'
         return redirect(self.service.get_authorize_url(
-            scope='openid',
+            scope='openid profile email',
             response_type='code',
             redirect_uri=self.get_callback_url())
         )
 
     def custom_decoder(self, x):
-        print 'Inside str2dict'
+        print 'Inside custom_decoder'
         print x
-        print 'Outside str2dict'
+        print 'Outside custom_decoder'
         return json.loads(str(x))
 
     def callback(self):
@@ -148,8 +150,15 @@ class CILogonSignIn(OAuthSignIn):
             ,
             decoder=self.custom_decoder
         )
+
+        # return oauth_session.client_id
+        me = oauth_session.client_id
+        print 'me: ' + me
+        print oauth_session.__attrs__
         print 'End callback'
-        return oauth_session.client_id
+        me_profile = oauth_session.get('email')
+        print me_profile
+        return 2, 'Jim Case', 'case@oceanz.org'
         # me = oauth_session.get('me?fields=id,email').json()
         # return (
         #     'facebook$' + me['id'],

@@ -1,6 +1,6 @@
 from flask import Flask, redirect, url_for, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
+from flask.ext.login import LoginManager, UserMixin, login_user, logout_user, \
     current_user
 from oauth import OAuthSignIn
 from collections import OrderedDict
@@ -54,6 +54,7 @@ __schema__ = 'ooiui'
 #     social_id = db.Column(db.String(64), nullable=False, unique=True)
 #     nickname = db.Column(db.String(64), nullable=False)
 #     email = db.Column(db.String(64), nullable=True)
+
 
 class Organization(db.Model, DictSerializableMixin):
     __tablename__ = 'organizations'
@@ -122,7 +123,7 @@ class UserScope(db.Model, DictSerializableMixin):
             'annotate',
             'command_control',
             'organization'
-            }
+        }
         for s in scopes:
             scope = UserScope.query.filter_by(scope_name=s).first()
             if scope is None:
@@ -164,11 +165,11 @@ class User(UserMixin, db.Model):
     organization = db.relationship(u'Organization')
     watches = db.relationship(u'Watch')
 
-   # def __init__(self, **kwargs):
-   #     super(User, self).__init__(**kwargs)
-   #         self.scope = Scope.query.filter_by(scope_name='user_admin').first()
-   #         if self.scope is None:
-   #             self.scope = Role.query.filter_by(default=True).first()
+    # def __init__(self, **kwargs):
+    #     super(User, self).__init__(**kwargs)
+    #         self.scope = Scope.query.filter_by(scope_name='user_admin').first()
+    #         if self.scope is None:
+    #             self.scope = Role.query.filter_by(default=True).first()
 
     def to_json(self):
         json_user = {
@@ -319,6 +320,70 @@ class Watch(db.Model, DictSerializableMixin):
         user_id = json_post.get('user_id')
         return Watch(id=id, start_time=start_time, end_time=end_time, user_id=user_id)
 
+
+class OperatorEventType(db.Model, DictSerializableMixin):
+    __tablename__ = 'operator_event_types'
+    __table_args__ = {u'schema': __schema__}
+
+    id = db.Column(db.Integer, primary_key=True)
+    type_name = db.Column(db.Text, nullable=False)
+    type_description = db.Column(db.Text)
+
+    def to_json(self):
+        json_operator_event_type_link = {
+            'id' : self.id,
+            'type_name' : self.type_name,
+            'type_description' : self.type_description
+        }
+        return json_operator_event_type_link
+
+    @staticmethod
+    def insert_operator_event_types():
+        event_info = OperatorEventType(type_name='INFO')
+        event_info.type_description = 'General information event.'
+        event_warn = OperatorEventType(type_name='WARN')
+        event_warn.type_description = 'A warning has occurred.'
+        event_error = OperatorEventType(type_name='ERROR')
+        event_error.type_description = 'An error has occurred.'
+        event_critical = OperatorEventType(type_name='CRITICAL')
+        event_critical.type_description = 'A critical event has occurred.'
+        event_start_watch = OperatorEventType(type_name='WATCH_START')
+        event_start_watch.type_description = 'Watch has started.'
+        event_end_watch = OperatorEventType(type_name='WATCH_END')
+        event_end_watch.type_description = 'Watch has ended.'
+
+        db.session.add_all([event_info, event_warn, event_error, event_critical, event_start_watch, event_end_watch])
+        db.session.commit()
+
+
+class OperatorEvent(db.Model, DictSerializableMixin):
+    __tablename__ = 'operator_events'
+    __table_args__ = {u'schema': __schema__}
+
+    id = db.Column(db.Integer, primary_key=True)
+    watch_id = db.Column(db.ForeignKey(u'' + __schema__ + '.watches.id'), nullable=False)
+    operator_event_type_id = db.Column(db.ForeignKey(u'' + __schema__ + '.operator_event_types.id'), nullable=False)
+    event_time = db.Column(db.DateTime(True), nullable=False, server_default=db.text("now()"))
+    event_title = db.Column(db.Text, nullable=False)
+    event_comment = db.Column(db.Text)
+
+    operator_event_type = db.relationship(u'OperatorEventType')
+
+    @staticmethod
+    def from_json(json):
+        watch_id = json.get('watch_id')
+        operator_event_type_id = json.get('operator_event_type_id')
+        event_time = json.get('event_time')
+        event_title = json.get('event_title')
+        event_comment = json.get('event_comment')
+
+        #Return the OperatorEvent object ready to be stored.
+        return OperatorEvent(watch_id=watch_id,
+                             operator_event_type_id=operator_event_type_id,
+                             event_time=event_time,
+                             event_title=event_title,
+                             event_comment=event_comment)
+
 @lm.user_loader
 def load_user(id):
     return User.query.get(int(id))
@@ -347,22 +412,26 @@ def oauth_authorize(provider):
 # @app.route('/login/authorized')
 @app.route('/callback/<provider>')
 def oauth_callback(provider):
+    logout_user()
     print 'Entering oauth_callback'
-    if not current_user.is_anonymous:
-        return redirect(url_for('index'))
+    # if not current_user.is_anonymous:
+    #     return redirect(url_for('index'))
     oauth = OAuthSignIn.get_provider(provider)
-    print oauth
-    print oauth.callback()
+    # print oauth
+    # print oauth.callback()
     user_id, username, email = oauth.callback()
+    user = User(id=user_id, user_name=username, email=email)
     if user_id is None:
         print 'Authentication failed.'
         return redirect(url_for('index'))
-    user = User.query.filter_by(user_id=user_id).first()
-    if not user:
-        user = User(user_id=user_id, user_name=username, email=email)
-        db.session.add(user)
-        db.session.commit()
+    # user = User.query.filter_by(user_id=user_id).first()
+    # if not user:
+    #     user = User(user_id=user_id, user_name=username, email=email)
+    #     db.session.add(user)
+    #     db.session.commit()
+    print user
     login_user(user, True)
+
     print 'Leaving oauth_callback'
     return redirect(url_for('index'))
 
