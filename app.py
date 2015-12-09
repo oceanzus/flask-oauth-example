@@ -347,6 +347,7 @@ def oauth_authorize(provider):
 # @app.route('/login/authorized')
 @app.route('/callback/<provider>')
 def oauth_callback(provider):
+    print 'Entering oauth_callback'
     if not current_user.is_anonymous:
         return redirect(url_for('index'))
     oauth = OAuthSignIn.get_provider(provider)
@@ -362,6 +363,7 @@ def oauth_callback(provider):
         db.session.add(user)
         db.session.commit()
     login_user(user, True)
+    print 'Leaving oauth_callback'
     return redirect(url_for('index'))
 
 

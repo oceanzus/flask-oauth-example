@@ -1,5 +1,6 @@
 from rauth import OAuth1Service, OAuth2Service
 from flask import current_app, url_for, request, redirect, session
+import json
 
 
 class OAuthSignIn(object):
@@ -123,23 +124,37 @@ class CILogonSignIn(OAuthSignIn):
             redirect_uri=self.get_callback_url())
         )
 
+    def custom_decoder(self, x):
+        print 'Inside str2dict'
+        print x
+        print 'Outside str2dict'
+        return json.loads(str(x))
+
     def callback(self):
+        print 'Begin callback'
+        print self.get_callback_url()
         print request.args
         if 'code' not in request.args:
             return None, None, None
-        print request.args
-        #return 'user_id', 'username', 'email'
+        print request.args['code'].rsplit('authzGrant', 1)[-1]
+
+        data = {'code': str(request.args['code']),
+                'grant_type': 'authorization_code',
+                'redirect_uri': self.get_callback_url()}
+        print data
 
         oauth_session = self.service.get_auth_session(
-            data={'code': request.args['code'],
-                  'grant_type': 'authorization_code',
-                  'redirect_uri': self.get_callback_url()}
+            data=data
+            ,
+            decoder=self.custom_decoder
         )
-        me = oauth_session.get('me?fields=id,email').json()
-        return (
-            'facebook$' + me['id'],
-            me.get('email').split('@')[0],  # Facebook does not provide
-                                            # username, so the email's user
-                                            # is used instead
-            me.get('email')
-        )
+        print 'End callback'
+        return oauth_session.client_id
+        # me = oauth_session.get('me?fields=id,email').json()
+        # return (
+        #     'facebook$' + me['id'],
+        #     me.get('email').split('@')[0],  # Facebook does not provide
+        #                                     # username, so the email's user
+        #                                     # is used instead
+        #     me.get('email')
+        # )
