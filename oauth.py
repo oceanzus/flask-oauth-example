@@ -151,7 +151,6 @@ class CILogonSignIn(OAuthSignIn):
             decoder=self.custom_decoder
         )
 
-        # return oauth_session.client_id
         me = oauth_session.client_id
         print 'me: ' + me
         print oauth_session.__attrs__
@@ -163,11 +162,3 @@ class CILogonSignIn(OAuthSignIn):
         print 'End callback'
 
         return me_profile['email'], me_profile['given_name'], me_profile['family_name']
-        # me = oauth_session.get('me?fields=id,email').json()
-        # return (
-        #     'facebook$' + me['id'],
-        #     me.get('email').split('@')[0],  # Facebook does not provide
-        #                                     # username, so the email's user
-        #                                     # is used instead
-        #     me.get('email')
-        # )

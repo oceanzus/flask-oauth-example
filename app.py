@@ -46,7 +46,7 @@ class DictSerializableMixin(object):
             return v.isoformat()
         return v
 
-__schema__ = 'ooiui'
+__schema__ = 'public'
 
 # class User(UserMixin, db.Model):
 #     __tablename__ = 'users'
@@ -384,8 +384,10 @@ class OperatorEvent(db.Model, DictSerializableMixin):
                              event_title=event_title,
                              event_comment=event_comment)
 
+
 @lm.user_loader
 def load_user(id):
+    print 'load_user id: ' + id
     return User.query.get(int(id))
 
 
@@ -436,7 +438,15 @@ def oauth_callback(provider):
     print 'Leaving oauth_callback'
     return redirect(url_for('index'))
 
-
 if __name__ == '__main__':
-    db.create_all()
+    # db.engine.execute("drop schema if exists public cascade")
+    # db.engine.execute("create schema public")
+    #
+    # db.create_all()
+    #
+    # with db.engine.connect() as con:
+    #     trans = con.begin()
+    #     con.execute("insert into organizations VALUES (1, 'RPS ASA', 'Applied Science Associates', NULL)")
+    #     trans.commit()
+
     app.run(debug=True, host='0.0.0.0', port=5100)
