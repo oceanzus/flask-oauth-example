@@ -139,7 +139,7 @@ class CILogonSignIn(OAuthSignIn):
         if 'code' not in request.args:
             return None, None, None
         print request.args['code'].rsplit('authzGrant', 1)[-1]
-
+        print 'code: ' + str(request.args['code'])
         data = {'code': str(request.args['code']),
                 'grant_type': 'authorization_code',
                 'redirect_uri': self.get_callback_url()}
@@ -155,10 +155,13 @@ class CILogonSignIn(OAuthSignIn):
         me = oauth_session.client_id
         print 'me: ' + me
         print oauth_session.__attrs__
+
+        # me_profile = oauth_session.get('')
+        # print me_profile
+
         print 'End callback'
-        me_profile = oauth_session.get('email')
-        print me_profile
-        return 2, 'Jim Case', 'case@oceanz.org'
+
+        return 'oceanzus', 'case@oceanz.org'
         # me = oauth_session.get('me?fields=id,email').json()
         # return (
         #     'facebook$' + me['id'],

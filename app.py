@@ -419,17 +419,18 @@ def oauth_callback(provider):
     oauth = OAuthSignIn.get_provider(provider)
     # print oauth
     # print oauth.callback()
-    user_id, username, email = oauth.callback()
-    user = User(id=user_id, user_name=username, email=email)
-    if user_id is None:
+    username, email = oauth.callback()
+    # user = User(user_id=username, user_name=username, email=email)
+    if username is None:
         print 'Authentication failed.'
         return redirect(url_for('index'))
-    # user = User.query.filter_by(user_id=user_id).first()
-    # if not user:
-    #     user = User(user_id=user_id, user_name=username, email=email)
-    #     db.session.add(user)
-    #     db.session.commit()
-    print user
+    user = User.query.filter_by(user_id=username).first()
+    if not user:
+        user = User(user_id=username, user_name=username, email=email, organization_id=1, email_opt_in=True, active=True)
+        print user
+        db.session.add(user)
+        db.session.commit()
+
     login_user(user, True)
 
     print 'Leaving oauth_callback'
@@ -437,5 +438,5 @@ def oauth_callback(provider):
 
 
 if __name__ == '__main__':
-    # db.create_all()
+    db.create_all()
     app.run(debug=True, host='0.0.0.0', port=5100)
