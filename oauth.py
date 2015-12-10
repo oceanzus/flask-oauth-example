@@ -156,12 +156,13 @@ class CILogonSignIn(OAuthSignIn):
         print 'me: ' + me
         print oauth_session.__attrs__
 
-        # me_profile = oauth_session.get('')
-        # print me_profile
+        me_profile = oauth_session.get('https://test.cilogon.org/oauth2/userinfo', params={'format': 'json'}).json()
+        print me_profile
+        print me_profile['email']
 
         print 'End callback'
 
-        return 'oceanzus', 'case@oceanz.org'
+        return me_profile['email'], me_profile['given_name'], me_profile['family_name']
         # me = oauth_session.get('me?fields=id,email').json()
         # return (
         #     'facebook$' + me['id'],

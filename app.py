@@ -419,14 +419,14 @@ def oauth_callback(provider):
     oauth = OAuthSignIn.get_provider(provider)
     # print oauth
     # print oauth.callback()
-    username, email = oauth.callback()
+    email, first_name, last_name = oauth.callback()
     # user = User(user_id=username, user_name=username, email=email)
-    if username is None:
+    if email is None:
         print 'Authentication failed.'
         return redirect(url_for('index'))
-    user = User.query.filter_by(user_id=username).first()
+    user = User.query.filter_by(email=email).first()
     if not user:
-        user = User(user_id=username, user_name=username, email=email, organization_id=1, email_opt_in=True, active=True)
+        user = User(user_id=email, user_name=email, email=email, first_name=first_name, last_name=last_name, organization_id=1, email_opt_in=True, active=True)
         print user
         db.session.add(user)
         db.session.commit()
